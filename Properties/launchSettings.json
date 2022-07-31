@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "HabitTracker": {
+      "commandName": "Project",
+      "workingDirectory": "C:\\Users\\User\\Desktop\\CPSC\\Csharp\\HabitTracker"
+    },
+    "WSL": {
+      "commandName": "WSL2",
+      "environmentVariables": {},
+      "distributionName": ""
+    }
+  }
+}
