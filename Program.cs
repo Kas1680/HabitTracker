@@ -5,17 +5,22 @@ using Microsoft.Data.Sqlite;
 
 class Program
 {
-    static string connectionString = @"Data Source = Habit.db";
+    /* Create a connection using a connection string as arguement.
+       The program will also auto-create the Habit database if none exist.
 
+    */
+    static string connectionString = @"Data Source = Habit.db";
+    static string exitMsg = "Type 0 to return to main menu";
     static void Main(string[] args)
     {
-        
+
         CreateDatabase();
 
         void CreateDatabase()
         {
             using (var connection = new SqliteConnection(connectionString))
             {
+                // Create a command to be send to database
                 using (var tableCmd = connection.CreateCommand())
                 {
                     connection.Open();
@@ -26,11 +31,15 @@ class Program
                         Quantity INTEGER
                         )";
 
+                    // Execute the given command
                     tableCmd.ExecuteNonQuery();
 
                 }
             }
+            // Don't need connection.Close() since using statement
+            // autoamtically uses Dispose()
         }
+        // Call the next method that display the menu and request user input
         GetUserInput();
     }
 
@@ -47,7 +56,7 @@ class Program
             $"\n1 - View All Records. " +
             $"\n2 - Insert Record." +
             $"\n3 - Delete Record." +
-            $"\n4 - Update Record." +
+            $"\n4 - Update Record.\n" +
             $"\nYour Input: ";
 
         while (!closeApp)
@@ -79,6 +88,8 @@ class Program
         }
     }
 
+    //-------------------------------------
+
     static void CloseApp()
     {
         Console.WriteLine("Closing Application. GoodBye");
@@ -89,7 +100,7 @@ class Program
         Console.Clear();
         using (var connection = new SqliteConnection(connectionString))
         {
-            using(var tableCmd = connection.CreateCommand())
+            using (var tableCmd = connection.CreateCommand())
             {
                 connection.Open();
                 tableCmd.CommandText = $"SELECT * FROM yourHabit";
@@ -107,12 +118,12 @@ class Program
                     }
 
                     Console.WriteLine("ID\tDATE\t\tQUANTITY");
-                    foreach(Habit habit in habitList)
+                    foreach (Habit habit in habitList)
                     {
                         string output = Convert.ToString(habit.GetID()) + "\t";
                         output += habit.GetDateTime().ToString("dd-mm-yy") + "\t";
                         output += habit.GetQuantity().ToString();
-                        Console.WriteLine(output);    
+                        Console.WriteLine(output);
                     }
 
                 }
@@ -120,12 +131,11 @@ class Program
                 {
                     Console.WriteLine("Error: No record is found in table");
                 }
-
-                connection.Close();
             }
         }
-
     }
+
+    //-------------------------------------
     private static void InsertRecord()
     {
         Console.WriteLine("\nInserting record: ");
@@ -134,22 +144,20 @@ class Program
 
         using (var connection = new SqliteConnection(connectionString))
         {
-            using(var tableCmd = connection.CreateCommand())
+            using (var tableCmd = connection.CreateCommand())
             {
                 connection.Open();
                 tableCmd.CommandText =
                     $"INSERT INTO yourHabit(Date, Quantity) VALUES('{date}', {habitQuantity})";
 
                 tableCmd.ExecuteNonQuery();
-
-                connection.Close();
-            }
+             }
         }
     }
 
     internal static int GetQuantity()
     {
-        Console.WriteLine("\nPlease enter a quantity: ");
+        Console.WriteLine($"\nPlease enter a quantity. {exitMsg}: ");
 
         string qInput = Console.ReadLine();
 
@@ -160,28 +168,66 @@ class Program
     }
     internal static string GetDateInput()
     {
-        Console.WriteLine("\nPlease insert the date: (Format: dd-mm-yy). Type 0 to return to main menu");
+        Console.WriteLine($"\nPlease insert the date (Format: dd-mm-yy). {exitMsg}: ");
 
         string dateInput = Console.ReadLine();
-        
-        if(dateInput == "0") GetUserInput();
+
+        if (dateInput == "0") GetUserInput();
 
         return dateInput;
     }
 
-    
+
+    //-------------------------------------
 
     static void DeleteRecord()
     {
+        ViewRecord();
+        Console.WriteLine("Deleting Record: ");
+        Console.WriteLine($"\nEnter the ID of record you would like to remove. {exitMsg} ");
+        var userInput = Console.ReadLine();
 
+
+        using ( var connection = new SqliteConnection(connectionString))
+        {
+            using (var tableCmd = connection.CreateCommand())
+            {
+                connection.Open();
+                tableCmd.CommandText = $"DELETE FROM yourHabit WHERE ID = '{userInput}'";
+                tableCmd.ExecuteNonQuery();
+                Console.WriteLine("\nDelete Successful\n");
+            }
+        }
     }
+
+
+    //-------------------------------------
 
     static void UpdateRecord()
     {
-
+        ViewRecord();
+        Console.WriteLine("\n\nUpdating Record: ");
+        Console.WriteLine("\nEnter the ID of the record you want to update: ");
+        var IDInput = Console.ReadLine();
+        Console.WriteLine("\nEnter the date in the format (dd-mm-yy): ");
+        var quanInput = Console.ReadLine();
+        Console.WriteLine("\nEnter the quantity: ");
+        var dateInput = Console.ReadLine();
+        
+        
+        using (var connection = new SqliteConnection(connectionString))
+        {
+            using (var tableCmd = connection.CreateCommand())
+            {
+                connection.Open();
+                tableCmd.CommandText =
+                    $"UPDATE yourHabit SET Quantity = '{quanInput}', Date = '{dateInput}' " +
+                    $"WHERE ID = '{IDInput}'";
+            }
+        }
     }
 
-  
+
 }
 
 public class Habit
