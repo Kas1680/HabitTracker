@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using Microsoft.Data.Sqlite;
-
+using HabitTracker;
 class Program
 {
     /* Create a connection using a connection string as arguement.
@@ -210,9 +210,9 @@ class Program
         Console.WriteLine("\nEnter the ID of the record you want to update: ");
         var IDInput = Console.ReadLine();
         Console.WriteLine("\nEnter the date in the format (dd-mm-yy): ");
-        var quanInput = Console.ReadLine();
-        Console.WriteLine("\nEnter the quantity: ");
         var dateInput = Console.ReadLine();
+        Console.WriteLine("\nEnter the quantity: ");
+        var quanInput = Console.ReadLine();
         
         
         using (var connection = new SqliteConnection(connectionString))
@@ -221,41 +221,12 @@ class Program
             {
                 connection.Open();
                 tableCmd.CommandText =
-                    $"UPDATE yourHabit SET Quantity = '{quanInput}', Date = '{dateInput}' " +
-                    $"WHERE ID = '{IDInput}'";
+                    $"UPDATE yourHabit SET Quantity = '{quanInput}', Date = '{dateInput}' WHERE ID = '{IDInput}'";
+                tableCmd.ExecuteNonQuery();
+                Console.WriteLine("\nDelete Successful\n");
             }
         }
     }
-
-
 }
 
-public class Habit
-{
-    public int ID { get; set; }
-    public DateTime Date { get; set; }
-    public int habitQuantity { get; set; }
-
-
-    public Habit(int ID, DateTime Date, int habitQuantity)
-    {
-        this.ID = ID;
-        this.Date = Date;
-        this.habitQuantity = habitQuantity;
-    }
-
-    public int GetID()
-    {
-        return this.ID;
-    }
-    public DateTime GetDateTime()
-    {
-        return this.Date;
-    }
-
-    public int GetQuantity()
-    {
-        return this.habitQuantity;
-    }
-}
 
