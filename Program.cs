@@ -46,12 +46,13 @@ class Program
 
     static void GetUserInput()
     {
+        // Display the menu and await user input for CRUD operation
         Console.Clear();
         bool closeApp = false;
 
         string displayMsg =
             $"\n\nMAIN MENU " +
-            $"\nWhat would you like to do\n " +
+            $"\nWhat would you like to do?\n " +
             $"\n0 - Close application. " +
             $"\n1 - View All Records. " +
             $"\n2 - Insert Record." +
@@ -67,7 +68,7 @@ class Program
             switch (userInput.Trim())
             {
                 case "0":
-                    CloseApp();
+                    closeApp = true;
                     break;
                 case "1":
                     ViewRecord();
@@ -86,15 +87,18 @@ class Program
                     break;
             }
         }
+        if (closeApp) CloseApp();
     }
 
     //-------------------------------------
 
     static void CloseApp()
     {
-        Console.WriteLine("Closing Application. GoodBye");
+        Console.WriteLine("Closing Application. Goodbye");
         Environment.Exit(0);
     }
+
+
     static void ViewRecord()
     {
         Console.Clear();
@@ -109,28 +113,50 @@ class Program
 
                 SqliteDataReader reader = tableCmd.ExecuteReader();
 
+                // Upload all records to a List using reader. Then print each of them.
                 if (reader.HasRows)
                 {
+                     
                     while (reader.Read())
                     {
                         Habit newHabit = new Habit(reader.GetInt32(0), DateTime.ParseExact(reader.GetString(1), "dd-mm-yy", new CultureInfo("en-US")), reader.GetInt32(2));
                         habitList.Add(newHabit);
                     }
 
+                    DateTime earliest = habitList[0].GetDateTime();
+                    DateTime latest = habitList.Last().GetDateTime();
+                    int total = 0;
+                    
+
                     Console.WriteLine("ID\tDATE\t\tQUANTITY");
                     foreach (Habit habit in habitList)
                     {
+                        // This part print out each record
                         string output = Convert.ToString(habit.GetID()) + "\t";
                         output += habit.GetDateTime().ToString("dd-mm-yy") + "\t";
                         output += habit.GetQuantity().ToString();
                         Console.WriteLine(output);
+
+                        // This part try to find the earliest and latest record and sum quantity count
+                        total += habit.GetQuantity();
+                        DateTime check = habit.GetDateTime();
+                        earliest = DateTime.Compare(earliest, check) <= 0? earliest : check ;
+                        latest = DateTime.Compare(latest, check) >= 0 ? latest : check;
                     }
+
+                    // Print the start and end date and total amount of quantity
+                    
+
+                    Console.WriteLine($"\nYour habit start at '{earliest.Day}, {earliest.Month}, {earliest.Year}' and end at '{latest.Day}, {latest.Month}, {latest.Year}'");
+                    Console.WriteLine($"You total habit is: {total}");
+                
 
                 }
                 else
                 {
                     Console.WriteLine("Error: No record is found in table");
                 }
+
             }
         }
     }
@@ -148,38 +174,52 @@ class Program
             {
                 connection.Open();
                 tableCmd.CommandText =
-                    $"INSERT INTO yourHabit(Date, Quantity) VALUES('{date}', {habitQuantity})";
+                    $@"IF NOT EXISTS(SELECT * FROM yourHabit WHERE DATE = '{date})'
+                    BEGIN
+                    INSERT INTO yourHabit(Date, Quantity) VALUES('{date}', {habitQuantity})
+                    END";
 
                 tableCmd.ExecuteNonQuery();
-             }
+            }
         }
     }
-
-    internal static int GetQuantity()
-    {
-        Console.WriteLine($"\nPlease enter a quantity. {exitMsg}: ");
-
-        string qInput = Console.ReadLine();
-
-        if (qInput == "0") GetUserInput();
-
-        int finalInput = Convert.ToInt32(qInput);
-        return finalInput;
-    }
+   
+    // Helper to receive a date input from user with validation
     internal static string GetDateInput()
     {
         Console.WriteLine($"\nPlease insert the date (Format: dd-mm-yy). {exitMsg}: ");
-
-        string dateInput = Console.ReadLine();
-
+        string? dateInput = Console.ReadLine();
         if (dateInput == "0") GetUserInput();
 
+        while (!DateTime.TryParseExact(dateInput, "dd-mm-yy", new CultureInfo("en-US"), DateTimeStyles.None, out _))
+        {
+            Console.WriteLine("\n\nInvalid Input. Please enter the correct date. Press 0 to exit.");
+            dateInput = Console.ReadLine();
+            if (dateInput == "0") GetUserInput();
+        }
+
         return dateInput;
+    }
+
+    // Helper to receive quantity from user and validate input
+    internal static int GetQuantity()
+    {
+        Console.WriteLine($"\nPlease enter a quantity. {exitMsg}: ");
+        string qInput = Console.ReadLine();
+        if (qInput == "0") GetUserInput();
+        int finalInput;
+        while (!int.TryParse(qInput, out finalInput) || Int32.Parse(qInput) < 0)
+        {
+            Console.WriteLine("Error: Invalid Input. Try Again.");
+            qInput = Console.ReadLine();
+        }
+        return finalInput;
     }
 
 
     //-------------------------------------
 
+    // Delete a record with the given ID or do nothing if ID does not exist
     static void DeleteRecord()
     {
         ViewRecord();
